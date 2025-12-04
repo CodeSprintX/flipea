@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import Home from './Pages/Home'
 import MarketPlace from './Pages/MarketPlace'
@@ -19,9 +19,24 @@ import CredentialChange from './Pages/admin/CredentialChange'
 import AllListings from './Pages/admin/AllListings'
 import Transactions from './Pages/admin/Transactions'
 import Withdrawal from './Pages/admin/Withdrawal'
+import { useAuth, useUser } from '@clerk/clerk-react'
+import { useDispatch } from 'react-redux'
+import { getAllPublicListing, getAllUserListing } from './app/features/listingSlice.js'
 
 const App = () => {
-  const {pathname} = useLocation()
+  const {pathname} = useLocation();
+  const {getToken} = useAuth();
+  const {user, isLoaded} = useUser()
+  const dispatch = useDispatch()
+  useEffect(()=>{
+    dispatch(getAllPublicListing())
+  },[] )
+  useEffect(()=>{
+    if(isLoaded && user){
+      dispatch(getAllUserListing({getToken}))
+    }
+  },[isLoaded, user] )
+
   return (
     <div>
       <Toaster />
@@ -34,8 +49,8 @@ const App = () => {
         <Route path='/create-listing' element={<ManageListing/>}/>
         <Route path='/edit-listing/:id' element={<ManageListing/>}/>
         <Route path='/messages' element={<Messages/>}/>
-        <Route path='/my-order' element={<MyOrder/>}/>
-        <Route path='/loading' element={<Loading/>}/>
+        <Route path='/my-orders' element={<MyOrder/>}/>
+        <Route path='/loading/:nextUrl' element={<Loading/>}/>
         <Route path='/admin' element={<Layout/>}>
         <Route index element={<Dashboard/>}/>
         <Route path='verify-credentials' element={<CredentialVerify/>}/>

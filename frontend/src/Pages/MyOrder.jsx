@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { dummyOrders, platformIcons } from '../assets/assets';
+
 import toast from 'react-hot-toast';
 import { CheckCircle2, ChevronDown, ChevronUp, Copy, Loader2Icon } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAuth, useUser } from '@clerk/clerk-react';
+import api from '../configs/axios';
 
 const MyOrder = () => {
+  const {user, isLoaded} = useUser()
+    const {getToken} = useAuth();
   const currency = import.meta.env.VITE_CURRENCY || '$';
 
   const [orders, setOrders] = useState([]);
@@ -12,14 +16,27 @@ const MyOrder = () => {
   const [expandedId, setExpandedId] = useState(null);
 
   const fetchOrders = async () => {
+    try {
+      setLoading(true)
+      const token = await getToken();
+      const {data} = await api.get('/api/listing/user-orders', {headers : {Authorization : `Bearer ${token}`}})
+      setOrders(data.orders)
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message)
+    }finally{
+      setLoading(false)
+    }
     
-    setOrders(dummyOrders);
-    setLoading(false);
+   
+   
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if(user && isLoaded){
+      fetchOrders();
+    }
+    
+  }, [isLoaded, user]);
 
   const mask = (val, type) => {
   if (!val || val === 0) {
@@ -34,6 +51,7 @@ const copy = async (txt) => {
     toast.success("Copied to clipboard");
   } catch (error) {
     toast.error("Copy failed");
+    
   }
 };
 if (loading) {
